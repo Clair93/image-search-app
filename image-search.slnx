@@ -1,0 +1,11 @@
+﻿<Solution>
+  <Project Path="Data.csproj" />
+  <Project Path="Bootstrap.csproj" />
+  <Project Path="Domain.csproj" />
+  <Project Path="Presentation.csproj" />
+  <Project Path="Core.csproj" />
+  <Project Path="Core.Tests.csproj" />
+  <Project Path="Data.Tests.csproj" />
+  <Project Path="Presentation.PlayModeTests.csproj" />
+  <Project Path="Assembly-CSharp-Editor.csproj" />
+</Solution>

@@ -1,0 +1,19 @@
+{
+    "name": "Presentation",
+    "rootNamespace": "ImageSearch.Presentation",
+    "references": [
+        "Core",
+        "Domain",
+        "UniTask",
+        "Unity.TextMeshPro"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

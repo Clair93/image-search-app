@@ -1,0 +1,166 @@
+@startuml diagram
+title 이미지 검색 앱 - Core / Domain / Presentation 클래스 다이어그램 (Data 레이어 상세는 별도 동기화 필요 — 아래 note 참고)
+
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+
+package "Core" {
+  enum NetworkError {
+    NoInternet
+    ServerError
+    NotFound
+    Unknown
+  }
+
+  abstract class "Result<TData, TError>" as Result {
+    - Result()
+  }
+
+  class "Result<TData, TError>.Success" as ResultSuccess {
+    + {readOnly} Value : TData
+  }
+
+  class "Result<TData, TError>.Error" as ResultError {
+    + {readOnly} Value : TError
+  }
+
+  ResultSuccess --|> Result
+  ResultError --|> Result
+}
+
+package "Domain" {
+  class ImageItem {
+    + {readOnly} Id : int
+    + {readOnly} ThumbnailUrl : string
+    + {readOnly} Tags : IReadOnlyList<string>
+    + {readOnly} AuthorName : string
+  }
+
+  class ImageSearchQuery <<Value Object>> {
+    + {readOnly} Keyword : string
+    + {readOnly} Page : int
+    + {readOnly} PerPage : int
+  }
+
+  interface IImageSearchRepository {
+    + SearchAsync(query : ImageSearchQuery, cancellationToken : CancellationToken) : UniTask<Result<IReadOnlyList<ImageItem>, NetworkError>>
+  }
+
+  IImageSearchRepository ..> ImageSearchQuery : 검색 조건으로 사용 (파라미터)
+  IImageSearchRepository ..> ImageItem : 검색 결과 항목으로 반환 (리스트)
+}
+
+IImageSearchRepository ..> Result : Result<TData,TError>로 성공/실패 래핑
+ResultError ..> NetworkError : 실패 유형으로 사용
+
+package "Data (placeholder)" {
+  class PixabayImageRepository
+}
+
+note right of PixabayImageRepository
+  Data 레이어 상세(DTO, Mapper, DataSource,
+  NetworkErrorClassifier 등)는 이 다이어그램에
+  아직 세부 반영되지 않음. 실제 구현은 이미 코드로
+  존재함(Assets/Scripts/Data).
+end note
+
+PixabayImageRepository ..|> IImageSearchRepository : 구현
+
+package "Presentation" {
+  interface ISearchScreenView {
+    + ShowLoading()
+    + ShowResults(items : IReadOnlyList<ImageItem>, thumbnailToken : CancellationToken)
+    + ShowEmpty()
+    + ShowError(message : string)
+  }
+
+  class SearchScreenView {
+    + Initialize(presenter : SearchScreenPresenter, thumbnailLoader : IThumbnailLoader)
+  }
+
+  class SearchScreenPresenter {
+    - {readOnly} _repository : IImageSearchRepository
+    - _searchCts : CancellationTokenSource
+    + AttachView(view : ISearchScreenView)
+    + OnSearchRequested(keyword : string) : UniTask
+  }
+
+  interface IThumbnailLoader {
+    + LoadAsync(url : string, cancellationToken : CancellationToken) : UniTask<Texture2D>
+  }
+
+  class UnityWebRequestThumbnailLoader
+
+  class ResultCardView {
+    - _texture : Texture2D
+    + Bind(item : ImageItem, loader : IThumbnailLoader, cancellationToken : CancellationToken)
+    + Release()
+  }
+
+  class NetworkErrorMessageMapper {
+    + {static} ToMessage(error : NetworkError) : string
+  }
+
+  SearchScreenView ..|> ISearchScreenView : 구현
+  UnityWebRequestThumbnailLoader ..|> IThumbnailLoader : 구현
+
+  SearchScreenView ..> SearchScreenPresenter : 사용자 입력 전달 (검색 탭)
+  SearchScreenPresenter ..> ISearchScreenView : 상태 렌더링 지시
+  SearchScreenPresenter ..> NetworkErrorMessageMapper : 오류 메시지 변환
+
+  SearchScreenView "1" *-- "0..*" ResultCardView : 그리드에 카드로 포함
+  SearchScreenView ..> IThumbnailLoader : 카드에 전달
+  ResultCardView ..> IThumbnailLoader : 썸네일 로드/취소
+}
+
+SearchScreenPresenter ..> IImageSearchRepository : 검색 요청 (Domain)
+SearchScreenPresenter ..> Result : Result 패턴 매칭 (Success/Error 분기)
+NetworkErrorMessageMapper ..> NetworkError : enum 값별 메시지 매핑
+
+package "Bootstrap" {
+  class CompositionRoot {
+    + Awake()
+  }
+}
+
+CompositionRoot ..> PixabayImageRepository : 생성 (Data 구현체)
+CompositionRoot ..> UnityWebRequestThumbnailLoader : 생성
+CompositionRoot ..> SearchScreenPresenter : 생성 + IImageSearchRepository 주입
+CompositionRoot ..> SearchScreenView : Presenter/Loader 주입
+
+note right of SearchScreenPresenter
+  검색 흐름:
+  1. OnSearchRequested → 이전 _searchCts Cancel()+Dispose(), 새로 생성
+  2. view.ShowLoading()
+  3. result = await repository.SearchAsync(query, token)
+  4. switch(result): Success(items) → 0건이면 ShowEmpty, 아니면
+     ShowResults(items, token) / Error(e) → ShowError(마퍼 메시지)
+  5. OperationCanceledException은 무시(더 새 검색이 대체함, 에러 아님)
+
+  취소 전파: 검색 토큰과 썸네일 로딩 토큰이 동일한 토큰이라
+  새 검색 시작 = 이전 검색 + 이전 썸네일 로딩 동시 취소.
+
+  메모리 해제: ResultCardView.Release()가 Object.Destroy(texture)
+  호출 — 카드 재사용/그리드 초기화 직전에 SearchScreenView가
+  기존 카드 전부에 대해 먼저 호출.
+end note
+
+note right of NetworkError
+  4가지 값은 초기 제안이며 필요에 따라 추가/조정 가능.
+  HTTP 상태 코드 등 Pixabay API 세부사항과 무관하게
+  Domain 관점의 실패 유형만 분류함 (구체적 매핑은
+  Data 레이어의 PixabayImageDataSource/NetworkErrorClassifier가 담당).
+end note
+
+note right of IImageSearchRepository
+  CancellationToken은 .NET BCL 타입이라 별도 클래스로 표기하지 않음.
+  UniTask<T>는 com.cysharp.unitask 패키지(Git 참조) 타입 —
+  Core/Domain asmdef가 이 패키지의 UniTask 어셈블리를 참조해야 함.
+  취소는 Result가 아니라 예외(OperationCanceledException)로
+  전파됨 (AGENTS.md 규칙) — UniTask도 동일하게 동작.
+end note
+
+note "Domain이 UniTask(Unity 생태계 전용 패키지)에 의존하게 되어\nUnity 밖에서도 재사용 가능한 순수 C#이라는 이전 목표는 포기함.\n(리뷰 시점의 절충 — 팀이 감수하기로 결정)" as PortabilityNote
+IImageSearchRepository .. PortabilityNote
+
+@enduml
