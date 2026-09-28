@@ -14,7 +14,7 @@ namespace ImageSearch.Data.Tests
             {
                 Id = 123,
                 Tags = "a, b",
-                PreviewUrl = "http://x/preview.jpg",
+                WebformatUrl = "http://x/webformat.jpg",
                 User = "alice"
             };
 
@@ -22,14 +22,14 @@ namespace ImageSearch.Data.Tests
 
             Assert.That(model.Id, Is.EqualTo(123));
             Assert.That(model.AuthorName, Is.EqualTo("alice"));
-            Assert.That(model.ThumbnailUrl, Is.EqualTo("http://x/preview.jpg"));
+            Assert.That(model.ThumbnailUrl, Is.EqualTo("http://x/webformat.jpg"));
             Assert.That(model.Tags, Is.EqualTo(new[] { "a", "b" }));
         }
 
         [Test]
         public void ToModel_EmptyTagString_ReturnsEmptyTagList()
         {
-            var dto = new PixabayImageDto { Id = 1, Tags = "", PreviewUrl = "u", User = "u" };
+            var dto = new PixabayImageDto { Id = 1, Tags = "", WebformatUrl = "u", User = "u" };
 
             var model = PixabayResponseMapper.ToModel(dto);
 
@@ -39,7 +39,7 @@ namespace ImageSearch.Data.Tests
         [Test]
         public void ToModel_SingleTag_ReturnsOneItem()
         {
-            var dto = new PixabayImageDto { Id = 1, Tags = "cat", PreviewUrl = "u", User = "u" };
+            var dto = new PixabayImageDto { Id = 1, Tags = "cat", WebformatUrl = "u", User = "u" };
 
             var model = PixabayResponseMapper.ToModel(dto);
 
@@ -49,7 +49,7 @@ namespace ImageSearch.Data.Tests
         [Test]
         public void ToModel_MessyTagSpacing_TrimsWhitespace()
         {
-            var dto = new PixabayImageDto { Id = 1, Tags = "cat, animal , cute", PreviewUrl = "u", User = "u" };
+            var dto = new PixabayImageDto { Id = 1, Tags = "cat, animal , cute", WebformatUrl = "u", User = "u" };
 
             var model = PixabayResponseMapper.ToModel(dto);
 
@@ -61,9 +61,9 @@ namespace ImageSearch.Data.Tests
         {
             var dtos = new List<PixabayImageDto>
             {
-                new() { Id = 1, Tags = "", PreviewUrl = "u1", User = "a" },
-                new() { Id = 2, Tags = "", PreviewUrl = "u2", User = "b" },
-                new() { Id = 3, Tags = "", PreviewUrl = "u3", User = "c" }
+                new() { Id = 1, Tags = "", WebformatUrl = "u1", User = "a" },
+                new() { Id = 2, Tags = "", WebformatUrl = "u2", User = "b" },
+                new() { Id = 3, Tags = "", WebformatUrl = "u3", User = "c" }
             };
 
             var models = PixabayResponseMapper.ToModels(dtos);

@@ -13,6 +13,9 @@ namespace ImageSearch.Data.Dtos
         [JsonProperty("previewURL")]
         public string PreviewUrl { get; set; }
 
+        [JsonProperty("webformatURL")]
+        public string WebformatUrl { get; set; }
+
         [JsonProperty("user")]
         public string User { get; set; }
     }

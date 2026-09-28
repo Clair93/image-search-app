@@ -278,7 +278,10 @@ namespace ImageSearch.EditorTools
             var tagsText = tagsRect.gameObject.AddComponent<TextMeshProUGUI>();
             tagsText.fontSize = 26f;
             tagsText.color = Color.black;
-            tagsText.alignment = TextAlignmentOptions.Left;
+            tagsText.alignment = TextAlignmentOptions.TopLeft;
+            tagsText.enableWordWrapping = true;
+            tagsText.overflowMode = TextOverflowModes.Ellipsis;
+            tagsText.maxVisibleLines = 2;
 
             var authorRect = CreateChild("Author", cardRect);
             authorRect.anchorMin = new Vector2(0f, 0f);

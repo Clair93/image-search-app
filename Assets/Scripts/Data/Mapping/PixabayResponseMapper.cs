@@ -10,7 +10,7 @@ namespace ImageSearch.Data.Mapping
     {
         public static ImageItem ToModel(PixabayImageDto dto)
         {
-            return new ImageItem(dto.Id, dto.PreviewUrl, ParseTags(dto.Tags), dto.User);
+            return new ImageItem(dto.Id, dto.WebformatUrl, ParseTags(dto.Tags), dto.User);
         }
 
         public static IReadOnlyList<ImageItem> ToModels(IReadOnlyList<PixabayImageDto> dtos)

@@ -16,6 +16,7 @@ namespace ImageSearch.Data.Tests
             Assert.That(dto.Hits[0].Id, Is.EqualTo(1));
             Assert.That(dto.Hits[0].Tags, Is.EqualTo("cat, animal"));
             Assert.That(dto.Hits[0].PreviewUrl, Is.EqualTo("http://x/1.jpg"));
+            Assert.That(dto.Hits[0].WebformatUrl, Is.EqualTo("http://x/1-web.jpg"));
             Assert.That(dto.Hits[0].User, Is.EqualTo("alice"));
         }
 

@@ -49,6 +49,10 @@ namespace ImageSearch.Presentation.Views
             catch (System.OperationCanceledException)
             {
             }
+            catch (System.Exception exception)
+            {
+                Debug.LogWarning($"[ResultCardView] Thumbnail load failed for '{item.ThumbnailUrl}': {exception.Message}");
+            }
         }
 
         public void Release()
